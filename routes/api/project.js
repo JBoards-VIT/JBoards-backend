@@ -11,7 +11,7 @@ router.get('/', auth, async (req, res) => {
     try {
         const user = await User.findById(req.user.id)
         const result = { user, projects: [] }
-        user.projects.forEach(projectId => {
+        user.projects.forEach(async (projectId) => {
             let project = await Project.findById(projectId)
             result.projects.push(project)
         })
@@ -47,7 +47,9 @@ router.post('/create', auth, [check('title', 'Project Title is required').not().
     }
 })
 
-router.post('/join', auth, [check('accessCode', 'Access Code is required').not().isEmpty()], async (req, res) => {
+router.post('/join', auth, [
+    check('accessCode', 'Access Code is required').not().isEmpty()
+], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ status: "failed", errors: errors.array() })
@@ -72,7 +74,10 @@ router.post('/join', auth, [check('accessCode', 'Access Code is required').not()
     }
 })
 
-router.post("/removeMember", auth, [check('userId', 'User Id is required').not().isEmpty(), check('projectId', 'Project Id is required').not().isEmpty()], async (req, res) => {
+router.post("/removeMember", auth, [
+    check('userId', 'User Id is required').not().isEmpty(),
+    check('projectId', 'Project Id is required').not().isEmpty()
+], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
@@ -89,7 +94,7 @@ router.post("/removeMember", auth, [check('userId', 'User Id is required').not()
                 const index2 = user.projects.indexOf(projectId)
                 user.projects.splice(index2, 1)
                 await user.save()
-                res.status(201).json({ status: "success", message: "Successfully Updated" })
+                res.status(200).json({ status: "success", message: "Successfully Updated" })
             }
             else {
                 res.status(400).json({ status: "failed", errors: [{ msg: 'User not found' }] })
@@ -105,7 +110,10 @@ router.post("/removeMember", auth, [check('userId', 'User Id is required').not()
 
 })
 
-router.post("/update", auth, [check('projectName', 'User Id is required').not().isEmpty(), check('projectId', 'Project Id is required').not().isEmpty()], async (req, res) => {
+router.post("/update", auth, [
+    check('projectName', 'User Id is required').not().isEmpty(),
+    check('projectId', 'Project Id is required').not().isEmpty()
+], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() })
@@ -116,7 +124,7 @@ router.post("/update", auth, [check('projectName', 'User Id is required').not().
         if (project) {
             project.name = projectName
             await project.save()
-            res.status(201).json({ status: "success", message: "Successfully Updated" })
+            res.status(200).json({ status: "success", message: "Successfully Updated" })
         }
         else {
             res.status(400).json({ status: "failed", errors: [{ msg: 'Project not found' }] })
@@ -127,4 +135,4 @@ router.post("/update", auth, [check('projectName', 'User Id is required').not().
     }
 })
 
-module.exports = router
+module.exports = router;
