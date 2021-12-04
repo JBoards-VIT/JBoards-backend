@@ -6,6 +6,7 @@ const config = require('config')
 const bcrypt = require('bcryptjs')
 const gravatar = require('gravatar')
 const { check, validationResult } = require('express-validator')
+const auth = require('../../middleware/auth')
 
 router.post('/register', [
     check('name', 'Name is required').not().isEmpty(),
@@ -86,6 +87,13 @@ router.post('/login', [
         console.error(err.message)
         res.status(500).send('Server error')
     }
+})
+
+router.get("/jwtValid", auth, (req, res) => {
+    res.status(200).json({
+        status: "success",
+        message: "JWT Valid"
+    })
 })
 
 module.exports = router

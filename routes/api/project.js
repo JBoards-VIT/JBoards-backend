@@ -7,16 +7,29 @@ const Project = require('../../models/Project')
 const Kanban = require('../../models/Kanban')
 const User = require('../../models/User')
 
-router.get('/', auth, async (req, res) => {
+router.get('/:projectId', auth, async (req, res) => {
+    const projectId = req.params.projectId;
     try {
-        const user = await User.findById(req.user.id)
-        const result = { user, projects: [] }
-        user.projects.forEach(async (projectId) => {
-            let project = await Project.findById(projectId)
-            result.projects.push(project)
-        })
-        res.json({ status: "success", result: result })
-    } catch (error) {
+        const project = await Project.findById(projectId);
+        const users = [];
+        if (project) {
+            for (let i = 0; i < project.members.length; i++) {
+                let userId = project.members[i];
+                const user = await User.findById(userId);
+                users.push(user);
+            }
+            res.json({
+                status: "success", result: {
+                    project,
+                    users
+                }
+            })
+        }
+        else {
+            res.status(400).json({ status: "failed", message: "Project does not exist" })
+        }
+    }
+    catch (error) {
         console.error(error.message)
         res.status(500).send('Server error')
     }
@@ -29,18 +42,24 @@ router.post('/create', auth, [check('title', 'Project Title is required').not().
     }
     const { title } = req.body
     try {
+        const user = await User.findById(req.user.id)
+        for (let i = 0; i < user.projects.length; i++) {
+            const project = await Project.findById(user.projects[i])
+            if (project.name === title) {
+                res.status(400).json({ status: "failed", message: "Project Already Exists" })
+            }
+        }
         const kanban = new Kanban()
         await kanban.save()
-        const project = new Project({
-            title,
-            kanban: kanban._id,
+        const newProject = new Project({
+            name: title,
+            kanban: kanban._id.toString(),
         })
-        project.members.push(req.user.id)
-        await project.save()
-        const user = await User.findById(req.user.id)
-        user.projects.push(project._id)
+        newProject.members.push(req.user.id)
+        await newProject.save()
+        user.projects.push(newProject._id.toString())
         await user.save()
-        res.status(201).json({ status: "success", result: project })
+        res.status(201).json({ status: "success", result: newProject })
     } catch (error) {
         console.error(error.message)
         res.status(500).send('Server error')
@@ -58,12 +77,17 @@ router.post('/join', auth, [
     try {
         const project = await Project.find({ accessCode: accessCode });
         if (project) {
-            project.members.push(req.user.id)
-            await project.save()
-            const user = await User.findById(req.user.id)
-            user.projects.push(project._id)
-            await user.save()
-            res.status(201).json({ status: "success", result: project })
+            if (project.members.indexOf(req.user.id) === -1) {
+                project.members.push(req.user.id)
+                await project.save()
+                const user = await User.findById(req.user.id)
+                user.projects.push(project._id.toString())
+                await user.save()
+                res.status(201).json({ status: "success", result: project })
+            }
+            else {
+                res.status(400).json({ status: "failed", message: "Already a member of this Project" })
+            }
         }
         else {
             res.status(400).json({ status: "failed", errors: [{ msg: 'Invalid Access Code' }] })
@@ -124,7 +148,7 @@ router.post("/update", auth, [
         if (project) {
             project.name = projectName
             await project.save()
-            res.status(200).json({ status: "success", message: "Successfully Updated" })
+            res.status(200).json({ status: "success", message: "Successfully Updated", project: project })
         }
         else {
             res.status(400).json({ status: "failed", errors: [{ msg: 'Project not found' }] })

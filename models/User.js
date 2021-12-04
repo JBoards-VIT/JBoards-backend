@@ -27,8 +27,7 @@ const UserSchema = new mongoose.Schema({
         default: Date.now
     },
     projects: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Project",
+        type: String,
     }]
 })
 

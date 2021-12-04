@@ -15,12 +15,6 @@ const CardSchema = new mongoose.Schema({
         default: null,
     },
     labels: [{
-        id: {
-            type: String,
-            default: function genUUID() {
-                uuid.v4()
-            }
-        },
         title: {
             type: String,
             required: true,
@@ -31,16 +25,14 @@ const CardSchema = new mongoose.Schema({
         },
     }],
     tasks: [{
-        id: {
-            type: String,
-            default: function genUUID() {
-                uuid.v4()
-            }
-        },
         title: {
             type: String,
             required: true,
         },
+        completed: {
+            type: Boolean,
+            default: false,
+        }
     }]
 })
 

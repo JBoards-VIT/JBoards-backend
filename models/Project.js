@@ -7,18 +7,16 @@ const ProjectSchema = new mongoose.Schema({
         required: true,
     },
     members: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        type: String,
     }],
     accessCode: {
         type: String,
         default: function genToken() {
-            uuid.v4()
+            return uuid.v4()
         }
     },
     kanban: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Kanban",
+        type: String,
     }
 })
 
