@@ -11,17 +11,17 @@ const auth = require('../../middleware/auth')
 router.post('/register', [
     check('name', 'Name is required').not().isEmpty(),
     check('email', 'Please include a valid email').isEmail(),
-    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 })
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 8 })
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.status(400).json({ errors: errors.array() })
     }
     const { name, email, password } = req.body
     try {
         let user = await User.findOne({ email })
         if (user) {
-            return res.status(400).json({ errors: [{ msg: 'User already exists' }] })
+            res.status(400).json({ errors: [{ msg: 'User already exists' }] })
         }
         const avatar = gravatar.url(email, {
             s: '200',
@@ -50,7 +50,7 @@ router.post('/register', [
             }) //change this : the expire thingy { expiresIn: 360000000 },
     } catch (err) {
         console.error(err.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 router.post('/login', [
@@ -85,7 +85,7 @@ router.post('/login', [
             }) //change this : the expire thingy { expiresIn: 360000000 },
     } catch (err) {
         console.error(err.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 

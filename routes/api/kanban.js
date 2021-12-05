@@ -38,10 +38,9 @@ router.get("/get-kanban/:projectId", auth, async (req, res) => {
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
-
 
 router.post("/board/create", auth, [
     check('name', 'Board name is required').not().isEmpty(),
@@ -67,7 +66,7 @@ router.post("/board/create", auth, [
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -90,7 +89,7 @@ router.post("/board/delete", auth, [
                     Card.deleteOne({ id: cardId }, (err) => {
                         if (err) {
                             console.log(err)
-                            res.status(500).send('Server error')
+                            res.status(500).json({ status: "failed", "error": error.message })
                         }
                     })
                 }
@@ -104,7 +103,7 @@ router.post("/board/delete", auth, [
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -131,7 +130,7 @@ router.post("/board/update", auth, [
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 });
 
@@ -148,7 +147,7 @@ router.post("/card/create", auth, [
     try {
         const kanban = await Kanban.findById(kanbanId);
         if (kanban) {
-            const boardIndex = kanban.boards.findIndex((board) => board.id === boardId)
+            const boardIndex = kanban.boards.findIndex((board) => board._id.toString() === boardId)
             const card = new Card({
                 title
             })
@@ -162,7 +161,7 @@ router.post("/card/create", auth, [
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -179,7 +178,7 @@ router.post("/card/delete", auth, [
     try {
         const kanban = await Kanban.findById(kanbanId);
         if (kanban) {
-            const boardIndex = kanban.boards.findIndex((board) => board.id === boardId)
+            const boardIndex = kanban.boards.findIndex((board) => board._id.toString() === boardId)
             const cardIndex = kanban.boards[boardIndex].cards.indexOf(cardId)
             if (cardIndex > -1) {
                 kanban.boards[boardIndex].cards.splice(cardIndex, 1)
@@ -187,7 +186,7 @@ router.post("/card/delete", auth, [
                 Card.deleteOne({ id: cardId }, (err) => {
                     if (err) {
                         console.log(err)
-                        res.status(500).send('Server error')
+                        res.status(500).json({ status: "failed", "error": error.message })
                     }
                     else {
                         res.status(200).json({ status: "success", message: "Successfully Deleted Card" })
@@ -200,9 +199,49 @@ router.post("/card/delete", auth, [
         }
     } catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
+
+router.post("/card/move", auth, [
+    check('sourceBoardId', 'Source Board Id is required').not().isEmpty(),
+    check('targetBoardId', 'Target Board Id is required').not().isEmpty(),
+    check('sourceCardIndex', 'Source Card Index is required').not().isEmpty(),
+    check('targetCardIndex', 'Target Card Index is required').not().isEmpty(),
+    check('kanbanId', 'Kanban Id is required').not().isEmpty(),
+], async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { sourceBoardId, targetBoardId, sourceCardIndex, targetCardIndex, kanbanId } = req.body
+    try {
+        const kanban = await Kanban.findById(kanbanId)
+        if (kanban) {
+            const sourceBoardIndex = kanban.boards.findIndex((board) => board._id.toString() === sourceBoardId);
+            const targetBoardIndex = kanban.boards.findIndex((board) => board._id.toString() === targetBoardId);
+            const cardId = kanban.boards[sourceBoardIndex].cards[sourceCardIndex];
+            if (cardId) {
+                kanban.boards[sourceBoardIndex].cards.splice(sourceCardIndex, 1);
+                console.log(kanban.boards[sourceBoardIndex].cards);
+                kanban.boards[targetBoardIndex].cards.splice(targetCardIndex, 0, cardId);
+                console.log(kanban.boards[targetBoardIndex].cards);
+                await kanban.save();
+                res.status(200).json({ status: "success", message: "Successfully Moved Card" });
+            }
+            else {
+                res.status(400).json({ status: "failed", message: 'Card not found' });
+            }
+        }
+        else {
+            res.status(400).json({ status: "failed", message: 'Kanban not found' });
+        }
+    }
+    catch (error) {
+        console.error(error.message)
+        res.status(500).json({ status: "failed", "error": error.message })
+    }
+});
 
 router.post("/card/update/title", auth, [
     check('title', 'Card Title is required').not().isEmpty(),
@@ -226,7 +265,7 @@ router.post("/card/update/title", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -252,7 +291,7 @@ router.post("/card/update/description", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -278,7 +317,7 @@ router.post("/card/update/deadline", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -308,7 +347,7 @@ router.post("/card/labels/add", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -334,7 +373,7 @@ router.post("/card/labels/delete", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -362,7 +401,7 @@ router.post("/card/tasks/add", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -388,7 +427,7 @@ router.post("/card/tasks/delete", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
@@ -415,7 +454,7 @@ router.post("/card/tasks/toggle", auth, [
     }
     catch (error) {
         console.error(error.message)
-        res.status(500).send('Server error')
+        res.status(500).json({ status: "failed", "error": error.message })
     }
 })
 
