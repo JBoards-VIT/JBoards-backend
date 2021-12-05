@@ -21,7 +21,7 @@ router.get("/get-kanban/:projectId", auth, async (req, res) => {
             if (kanban.boards.length > 0) {
                 for (let i = 0; i < kanban.boards.length; i++) {
                     const board = kanban.boards[i];
-                    const boardResult = { _id: board.id, name: board.name, cards: [] }
+                    const boardResult = { _id: board.id, title: board.name, cards: [] }
                     if (board.cards.length > 0) {
                         for (let j = 0; j < board.cards.length; j++) {
                             const card = await Card.findById(board.cards[j])
@@ -34,7 +34,7 @@ router.get("/get-kanban/:projectId", auth, async (req, res) => {
             res.status(200).json({ status: "success", result: result })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Project not found' })
+            res.json({ status: "failed", message: 'Project not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -48,7 +48,7 @@ router.post("/board/create", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { name, kanbanId } = req.body
     try {
@@ -62,7 +62,7 @@ router.post("/board/create", auth, [
             res.status(201).json({ status: "success", result: updatedKanban })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' })
+            res.json({ status: "failed", message: 'Kanban not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -76,7 +76,7 @@ router.post("/board/delete", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { boardId, kanbanId } = req.body
     try {
@@ -99,7 +99,7 @@ router.post("/board/delete", auth, [
             res.status(200).json({ status: "success", message: "Successfully Deleted Board" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' })
+            res.json({ status: "failed", message: 'Kanban not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -114,7 +114,7 @@ router.post("/board/update", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { name, boardId, kanbanId } = req.body
     try {
@@ -126,7 +126,7 @@ router.post("/board/update", auth, [
             res.status(200).json({ status: "success", message: "Successfully Updated Board" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' })
+            res.json({ status: "failed", message: 'Kanban not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -141,7 +141,7 @@ router.post("/card/create", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { title, boardId, kanbanId } = req.body
     try {
@@ -157,7 +157,7 @@ router.post("/card/create", auth, [
             res.status(201).json({ status: "success", message: "Successfully Added Card" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' })
+            res.json({ status: "failed", message: 'Kanban not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -172,7 +172,7 @@ router.post("/card/delete", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { cardId, boardId, kanbanId } = req.body
     try {
@@ -195,7 +195,7 @@ router.post("/card/delete", auth, [
             }
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' })
+            res.json({ status: "failed", message: 'Kanban not found' })
         }
     } catch (error) {
         console.error(error.message)
@@ -212,7 +212,7 @@ router.post("/card/move", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { sourceBoardId, targetBoardId, sourceCardIndex, targetCardIndex, kanbanId } = req.body
     try {
@@ -230,11 +230,11 @@ router.post("/card/move", auth, [
                 res.status(200).json({ status: "success", message: "Successfully Moved Card" });
             }
             else {
-                res.status(400).json({ status: "failed", message: 'Card not found' });
+                res.json({ status: "failed", message: 'Card not found' });
             }
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Kanban not found' });
+            res.json({ status: "failed", message: 'Kanban not found' });
         }
     }
     catch (error) {
@@ -249,7 +249,7 @@ router.post("/card/update/title", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { title, cardId } = req.body
     try {
@@ -260,7 +260,7 @@ router.post("/card/update/title", auth, [
             res.status(200).json({ status: "success", message: "Successfully Updated Card Title" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -275,7 +275,7 @@ router.post("/card/update/description", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { description, cardId } = req.body
     try {
@@ -286,7 +286,7 @@ router.post("/card/update/description", auth, [
             res.status(200).json({ status: "success", message: "Successfully Updated Card Description" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -301,7 +301,7 @@ router.post("/card/update/deadline", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { deadline, cardId } = req.body
     try {
@@ -312,7 +312,7 @@ router.post("/card/update/deadline", auth, [
             res.status(200).json({ status: "success", message: "Successfully Updated Card Deadline Date" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -328,7 +328,7 @@ router.post("/card/labels/add", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { title, color, cardId } = req.body
     try {
@@ -342,7 +342,7 @@ router.post("/card/labels/add", auth, [
             res.status(200).json({ status: "success", message: "Successfully Added Card Label" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -357,7 +357,7 @@ router.post("/card/labels/delete", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { labelId, cardId } = req.body
     try {
@@ -368,7 +368,7 @@ router.post("/card/labels/delete", auth, [
             res.status(200).json({ status: "success", message: "Successfully Deleted Card Label" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -383,7 +383,7 @@ router.post("/card/tasks/add", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { title, cardId } = req.body
     try {
@@ -396,7 +396,7 @@ router.post("/card/tasks/add", auth, [
             res.status(200).json({ status: "success", message: "Successfully Added Card Task" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -411,7 +411,7 @@ router.post("/card/tasks/delete", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { taskId, cardId } = req.body
     try {
@@ -422,7 +422,7 @@ router.post("/card/tasks/delete", auth, [
             res.status(200).json({ status: "success", message: "Successfully Deleted Card Task" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {
@@ -437,7 +437,7 @@ router.post("/card/tasks/toggle", auth, [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() })
+        res.json({ status: "failed", errors: errors.array() })
     }
     const { taskId, cardId } = req.body
     try {
@@ -449,7 +449,7 @@ router.post("/card/tasks/toggle", auth, [
             res.status(200).json({ status: "success", message: "Successfully Toggled Card Task" })
         }
         else {
-            res.status(400).json({ status: "failed", message: 'Card not found' })
+            res.json({ status: "failed", message: 'Card not found' })
         }
     }
     catch (error) {

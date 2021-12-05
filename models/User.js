@@ -19,8 +19,7 @@ const UserSchema = new mongoose.Schema({
     },
     registrationNumber: {
         type: String,
-        unique: true,
-        default: null
+        default: null,
     },
     createdAt: {
         type: Date,

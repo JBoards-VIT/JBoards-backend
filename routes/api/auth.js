@@ -15,13 +15,13 @@ router.post('/register', [
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
-        res.status(400).json({ errors: errors.array() })
+        res.json({ errors: errors.array() })
     }
     const { name, email, password } = req.body
     try {
         let user = await User.findOne({ email })
         if (user) {
-            res.status(400).json({ errors: [{ msg: 'User already exists' }] })
+            res.json({ errors: [{ msg: 'User already exists' }] })
         }
         const avatar = gravatar.url(email, {
             s: '200',
@@ -46,7 +46,7 @@ router.post('/register', [
             config.get('jwtsecret'),
             (err, token) => {
                 if (err) throw err
-                res.json({ token })
+                res.status(200).json({ status: "success", result: { token, user } })
             }) //change this : the expire thingy { expiresIn: 360000000 },
     } catch (err) {
         console.error(err.message)
@@ -60,17 +60,17 @@ router.post('/login', [
     const errors = validationResult(req)
 
     if (!errors.isEmpty()) {
-        return res.status(400).json({ status: "failed", errors: errors.array() })
+        return res.json({ status: "failed", errors: errors.array() })
     }
     const { email, password } = req.body
     try {
         let user = await User.findOne({ email })
         if (!user) {
-            return res.status(400).json({ status: "failed", errors: [{ msg: 'Invalid credentials' }] })
+            return res.json({ status: "failed", errors: [{ msg: 'Invalid credentials' }] })
         }
         const isMatch = await bcrypt.compare(password, user.password)
         if (!isMatch) {
-            return res.status(400).json({ status: "failed", errors: [{ msg: 'Invalid credentials' }] })
+            return res.json({ status: "failed", errors: [{ msg: 'Invalid credentials' }] })
         }
         const payload = {
             user: {
@@ -81,7 +81,7 @@ router.post('/login', [
             config.get('jwtsecret'),
             (err, token) => {
                 if (err) throw err
-                res.json({ status: "success", token: token })
+                res.status(200).json({ status: "success", result: { token, user } })
             }) //change this : the expire thingy { expiresIn: 360000000 },
     } catch (err) {
         console.error(err.message)
