@@ -42,6 +42,7 @@ router.get("/get-kanban/:projectId", auth, async (req, res) => {
     }
 })
 
+
 router.post("/board/create", auth, [
     check('name', 'Board name is required').not().isEmpty(),
     check('kanbanId', 'Kanban Id is required').not().isEmpty()

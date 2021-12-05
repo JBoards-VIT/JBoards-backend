@@ -2,10 +2,11 @@ const express = require('express')
 const router = express.Router()
 const auth = require('../../middleware/auth')
 const { check, validationResult } = require('express-validator')
-
+const { format } = require("date-fns")
 const Project = require('../../models/Project')
 const Kanban = require('../../models/Kanban')
 const User = require('../../models/User')
+const Card = require('../../models/Card')
 
 router.get('/:projectId', auth, async (req, res) => {
     const projectId = req.params.projectId;
@@ -30,6 +31,47 @@ router.get('/:projectId', auth, async (req, res) => {
         }
     }
     catch (error) {
+        console.error(error.message)
+        res.status(500).send('Server error')
+    }
+})
+
+router.post("/get-deadlines", auth, [
+    check('deadline', 'Deadline Date is required').isDate(),
+], async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() })
+    }
+    const { deadline } = req.body;
+    const result = {
+        deadlines: [],
+    }
+    try {
+        const user = await User.findById(req.user.id)
+        for (let i = 0; i < user.projects.length; i++) {
+            const project = await Project.findById(user.projects[i])
+            const kanban = await Kanban.findById(project.kanban)
+            if (kanban.boards.length > 0) {
+                for (let j = 0; j < kanban.boards.length; j++) {
+                    const board = kanban.boards[j];
+                    if (board.cards.length > 0) {
+                        for (let k = 0; k < board.cards.length; k++) {
+                            const card = await Card.findById(board.cards[k]);
+                            if (format(card.deadlineDate, "yyyy-MM-dd") === deadline) {
+                                result.deadlines.push({
+                                    project: project.name,
+                                    title: card.title,
+                                    deadline: format(card.deadlineDate, "yyyy-MM-dd")
+                                })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        res.status(200).json({ status: "success", result: result })
+    } catch (error) {
         console.error(error.message)
         res.status(500).send('Server error')
     }
