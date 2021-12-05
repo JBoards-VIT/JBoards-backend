@@ -22,7 +22,7 @@ router.get('/:projectId', auth, async (req, res) => {
             res.json({
                 status: "success", result: {
                     project,
-                    users
+                    members: users
                 }
             })
         }
@@ -117,7 +117,7 @@ router.post('/join', auth, [
     }
     const { accessCode } = req.body
     try {
-        const project = await Project.find({ accessCode: accessCode });
+        const project = await Project.findOne({ accessCode: accessCode });
         if (project) {
             if (project.members.indexOf(req.user.id) === -1) {
                 project.members.push(req.user.id)
@@ -125,7 +125,7 @@ router.post('/join', auth, [
                 const user = await User.findById(req.user.id)
                 user.projects.push(project._id.toString())
                 await user.save()
-                res.status(201).json({ status: "success", result: project })
+                res.status(201).json({ status: "success", message: "Successfully Added to the Project" })
             }
             else {
                 res.status(400).json({ status: "failed", message: "Already a member of this Project" })
