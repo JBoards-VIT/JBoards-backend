@@ -59,7 +59,7 @@ router.post("/board/create", auth, [
             })
             await kanban.save();
             const updatedKanban = await Kanban.findById(kanbanId);
-            res.status(201).json({ status: "success", result: updatedKanban })
+            res.status(201).json({ status: "success", result: kanban.boards[kanban.boards.length - 1] })
         }
         else {
             res.json({ status: "failed", message: 'Kanban not found' })
@@ -134,6 +134,34 @@ router.post("/board/update", auth, [
     }
 });
 
+router.post("/board/move", auth, [
+    check('sourceBoardIndex', 'Source Card Index is required').not().isEmpty(),
+    check('targetBoardIndex', 'Target Card Index is required').not().isEmpty(),
+    check('kanbanId', 'Kanban Id is required').not().isEmpty(),
+], async (req, res) => {
+    const errors = validationResult(req)
+    if (!errors.isEmpty()) {
+        res.json({ status: "failed", errors: errors.array() })
+    }
+    const { sourceBoardIndex, targetBoardIndex, kanbanId } = req.body
+    try {
+        const kanban = await Kanban.findById(kanbanId);
+        if (kanban) {
+            const board = kanban.boards[sourceBoardIndex]
+            kanban.boards.splice(sourceBoardIndex, 1);
+            kanban.boards.splice(targetBoardIndex, 0, board);
+            await kanban.save();
+            res.status(200).json({ status: "success", message: "Successfully Updated Board" })
+        }
+        else {
+            res.json({ status: "failed", message: 'Kanban not found' })
+        }
+    } catch (error) {
+        console.error(error.message)
+        res.status(500).json({ status: "failed", "error": error.message })
+    }
+});
+
 router.post("/card/create", auth, [
     check('title', 'Card title is required').not().isEmpty(),
     check('boardId', 'Board Id is required').not().isEmpty(),
@@ -154,7 +182,7 @@ router.post("/card/create", auth, [
             await card.save()
             kanban.boards[boardIndex].cards.push(card._id)
             await kanban.save()
-            res.status(201).json({ status: "success", message: "Successfully Added Card" })
+            res.status(201).json({ status: "success", message: "Successfully Added Card", result: card })
         }
         else {
             res.json({ status: "failed", message: 'Kanban not found' })
@@ -223,9 +251,7 @@ router.post("/card/move", auth, [
             const cardId = kanban.boards[sourceBoardIndex].cards[sourceCardIndex];
             if (cardId) {
                 kanban.boards[sourceBoardIndex].cards.splice(sourceCardIndex, 1);
-                console.log(kanban.boards[sourceBoardIndex].cards);
                 kanban.boards[targetBoardIndex].cards.splice(targetCardIndex, 0, cardId);
-                console.log(kanban.boards[targetBoardIndex].cards);
                 await kanban.save();
                 res.status(200).json({ status: "success", message: "Successfully Moved Card" });
             }
@@ -339,7 +365,7 @@ router.post("/card/labels/add", auth, [
                 color
             })
             await card.save();
-            res.status(200).json({ status: "success", message: "Successfully Added Card Label" })
+            res.status(200).json({ status: "success", message: "Successfully Added Card Label", result: card.labels[card.labels.length - 1] })
         }
         else {
             res.json({ status: "failed", message: 'Card not found' })
@@ -393,7 +419,9 @@ router.post("/card/tasks/add", auth, [
                 title,
             })
             await card.save();
-            res.status(200).json({ status: "success", message: "Successfully Added Card Task" })
+            let newChecked = card.tasks.filter((task) => task.completed === true).length;
+            let progress = (newChecked / card.tasks.length) * 100;
+            res.status(200).json({ status: "success", message: "Successfully Added Card Task", result: { task: card.tasks[card.tasks.length - 1], progress: progress } })
         }
         else {
             res.json({ status: "failed", message: 'Card not found' })
@@ -419,7 +447,9 @@ router.post("/card/tasks/delete", auth, [
         if (card) {
             card.tasks = card.tasks.filter((task) => task._id.toString() !== taskId)
             await card.save();
-            res.status(200).json({ status: "success", message: "Successfully Deleted Card Task" })
+            let newChecked = card.tasks.filter((task) => task.completed === true).length;
+            let progress = (newChecked / card.tasks.length) * 100;
+            res.status(200).json({ status: "success", message: "Successfully Deleted Card Task", result: { progress: progress } })
         }
         else {
             res.json({ status: "failed", message: 'Card not found' })
@@ -446,7 +476,9 @@ router.post("/card/tasks/toggle", auth, [
             const taskIndex = card.tasks.findIndex((task) => task._id.toString() === taskId)
             card.tasks[taskIndex].completed = !card.tasks[taskIndex].completed
             await card.save();
-            res.status(200).json({ status: "success", message: "Successfully Toggled Card Task" })
+            let newChecked = card.tasks.filter((task) => task.completed === true).length;
+            let progress = (newChecked / card.tasks.length) * 100;
+            res.status(200).json({ status: "success", message: "Successfully Toggled Card Task", result: { completed: card.tasks[taskIndex].completed, progress: progress } })
         }
         else {
             res.json({ status: "failed", message: 'Card not found' })

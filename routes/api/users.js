@@ -60,7 +60,7 @@ router.get("/projects", auth, async (req, res) => {
 })
 
 router.post("/get-deadlines", auth, [
-    check('deadline', 'Deadline Date is required').isDate(),
+    check('deadline', 'Deadline Date is required').not().isEmpty(),
 ], async (req, res) => {
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
@@ -81,12 +81,15 @@ router.post("/get-deadlines", auth, [
                     if (board.cards.length > 0) {
                         for (let k = 0; k < board.cards.length; k++) {
                             const card = await Card.findById(board.cards[k]);
-                            if (format(card.deadlineDate, "yyyy-MM-dd") === deadline) {
-                                result.deadlines.push({
-                                    project: project.name,
-                                    title: card.title,
-                                    deadline: format(card.deadlineDate, "yyyy-MM-dd")
-                                })
+                            if (card.deadline) {
+                                console.log(format(card.deadlineDate, "yyyy-MM-dd"))
+                                if (format(card.deadlineDate, "yyyy-MM-dd") === deadline) {
+                                    result.deadlines.push({
+                                        project: project.name,
+                                        title: card.title,
+                                        deadline: format(card.deadlineDate, "yyyy-MM-dd")
+                                    })
+                                }
                             }
                         }
                     }
